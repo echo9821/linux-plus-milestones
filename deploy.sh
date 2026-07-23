@@ -2,8 +2,8 @@
 # ============================================================
 # Linux+ Milestone 2 — Server Deployment Script
 #
-# Student:     [YOUR FULL NAME]
-# Date:        [DATE]
+# Student:     Margaret Dunsmore
+# Date:        7-22-2026
 # Environment: Ubuntu 22.04 container (Docker)
 # Scenario:    Deploy and harden a web server role
 #
@@ -76,6 +76,14 @@ log "============================================================"
 #       Key flags: -r (system account), -s (shell), -d (home directory), -m (create home)
 
 # YOUR CODE HERE:
+#Create webservice as system account with non-login shell and home directory of /var/lib/webservice.
+#Webservice is a system account and should not have access to a login shell - the flag that does this is -r. 
+
+sudo useradd -r -m -d /var/lib/webservice -s /usr/sbin/nologin webservice
+echo "Created User: "
+getent passwd webservice 
+echo "Home Directory Permissions: "
+ls -ld /var/lib/webservice
 
 
 log "Section 1 complete"
@@ -103,6 +111,17 @@ log "Section 1 complete"
 #         - What is the numeric permission value you chose and why?
 
 # YOUR CODE HERE:
+#Create /var/www/html only if it does not already exist
+
+mkdir -p /var/www/html
+echo "Created /var/www/html directory"
+
+#Set ownership of /var/www/html to webservice and set appropriate file/directory permissions
+
+sudo chown -R webservice:webservice /var/www/html
+sudo chmod 755 /var/www/html
+echo "Set /var/www/html ownership: "
+ls -ld /var/www/html
 
 
 log "Section 2 complete"
@@ -126,7 +145,11 @@ log "Section 2 complete"
 #         - What does verifying the exit code protect against?
 
 # YOUR CODE HERE:
+#install apache2
+sudo apt update 
+sudo apt install -y apache2 
 
+echo "Installed Apache"
 
 log "Section 3 complete"
 
@@ -155,6 +178,12 @@ log "Section 3 complete"
 
 # YOUR CODE HERE:
 
+# systemctl enable tells the system to start Apache when the system boots, whereas systemctl start starts Apache immediately. You need both.
+
+sudo systemctl enable apache2 
+sudo systemctl start apache2
+#systemctl does not run inside standard docker containers, so you will get a FAIL message here
+
 
 log "Section 4 complete"
 
@@ -179,6 +208,22 @@ log "Section 4 complete"
 
 # YOUR CODE HERE:
 
+#allow only needed web ports - HTTP/HTTPS
+#document docker-specific behavior
+
+#set default firewall rules
+sudo ufw default deny incoming 
+sudo ufw default allow outgoing 
+
+#allow only HTTP(port 80) and HTTPS(port 443)
+sudo ufw allow 80/tcp 
+sudo ufw allow 443/tcp 
+
+sudo ufw -force enable 
+
+#this will fail because docker bypasses UFW by default
+
+echo -e "Firewall Status: \n$(sudo ufw status | grep -E "(Status:|80|443|Nginx|Apache)")"
 
 log "Section 5 complete"
 
@@ -205,6 +250,28 @@ log "Section 5 complete"
 #       (crontab -l 2>/dev/null; echo "0 2 * * 0 /usr/sbin/logrotate /etc/logrotate.conf") | crontab -
 
 # YOUR CODE HERE:
+
+# Define file locations
+LOG_FILE="/var/log/deploy.log"
+CRON_FILE="/etc/cron.d/webservice-logrotate"
+
+echo "Setting up weekly logrotate cron job..."
+
+# 1. Create the log file if it doesn't exist and set permissions
+sudo touch "$LOG_FILE"
+sudo chmod 644 "$LOG_FILE"
+
+# 2. Create the cron job in /etc/cron.d/
+sudo bash -c "cat << 'EOF' > $CRON_FILE
+# Run logrotate weekly on Sunday at midnight and log output
+0 0 * * 0 root /usr/sbin/logrotate -v /etc/logrotate.conf >> $LOG_FILE 2>&1
+EOF"
+
+# 3. Ensure correct permissions on the cron file
+sudo chmod 644 "$CRON_FILE"
+
+echo "Cron job created successfully at $CRON_FILE"
+echo "Logging output set to $LOG_FILE"
 
 
 log "Section 6 complete"
