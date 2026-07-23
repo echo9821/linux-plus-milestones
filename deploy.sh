@@ -239,6 +239,9 @@ sudo ufw --force enable
 #this will fail because docker bypasses UFW by default. Docker inserts its rules into the iptables BEFORE ufw, so anything defined in ufw will not apply to things run in Docker.
 #you will get messages saying you cannot run iptables because you are not root. 
 
+#Show Firewall Status
+sudo ufw status
+
 log "Section 5 complete"
 
 
@@ -269,20 +272,23 @@ log "Section 5 complete"
 LOG_FILE="/var/log/deploy.log"
 CRON_FILE="/etc/cron.d/webservice-logrotate"
 
-echo "Setting up weekly logrotate cron job..."
-
-# 1. Create the log file if it doesn't exist and set permissions
+# Create the log file if it doesn't exist and set permissions
 sudo touch "$LOG_FILE"
 sudo chmod 644 "$LOG_FILE"
 
-# 2. Create the cron job in /etc/cron.d/
+# Ensure correct permissions on the cron file
+sudo chmod 644 "$CRON_FILE"
+
+# Create the cron job in /etc/cron.d/ midnight - 0 0 weekly on sunday * * 0
+#root ensures that logrotate is run by the root user.
+#logrotate renames the current log file and creates a new one, so that the log files do not grow indefinitely
+#/etc/logrotate.conf is the configuration file for logrotate
 sudo bash -c "cat << 'EOF' > $CRON_FILE
 # Run logrotate weekly on Sunday at midnight and log output
 0 0 * * 0 root /usr/sbin/logrotate -v /etc/logrotate.conf >> $LOG_FILE 2>&1
 EOF"
 
-# 3. Ensure correct permissions on the cron file
-sudo chmod 644 "$CRON_FILE"
+crontab -l | grep "/usr/sbin/logrotate"
 
 echo "Cron job created successfully at $CRON_FILE"
 echo "Logging output set to $LOG_FILE"
