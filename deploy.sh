@@ -157,6 +157,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "Installation succeeded (Exit code: $EXIT_CODE)"
 else
     echo "Installation failed with exit code: $EXIT_CODE"
+fi
 
 log "Section 3 complete"
 
@@ -189,6 +190,7 @@ log "Section 3 complete"
 
 sudo systemctl enable apache2 
 sudo systemctl start apache2
+
 #systemctl does not run inside standard docker containers, because docker does not run an init system like systemd. Docker runs applications directly in the foreground.
 #systemctl requires systemd to manage services, so without systemd, systemctl will not function
 #The error you get is: 
