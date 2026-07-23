@@ -146,6 +146,7 @@ log "Section 2 complete"
 
 # YOUR CODE HERE:
 #Get any updates from the Ubuntu server and install Apache
+#Apache is a free cross-platform web server
 #The && ensures that the install command only runs if the update command succeeds. 
 #The -y flag accepts any prompts that the install command would normally ask automatically, which means the user doesn't have to do anything
 sudo apt-get update && sudo apt-get install -y apache2 
@@ -156,7 +157,7 @@ EXIT_CODE=$?
 if [ $EXIT_CODE -eq 0 ]; then
     echo "Installation succeeded (Exit code: $EXIT_CODE)"
 else
-    echo "Installation failed with exit code: $EXIT_CODE"
+    log "Installation failed with exit code: $EXIT_CODE"
 fi
 
 log "Section 3 complete"
@@ -190,6 +191,9 @@ log "Section 3 complete"
 
 sudo systemctl enable apache2 
 sudo systemctl start apache2
+
+#This prints the status of apache to make sure it is turned on
+sudo systemctl is-active apache2
 
 #systemctl does not run inside standard docker containers, because docker does not run an init system like systemd. Docker runs applications directly in the foreground.
 #systemctl requires systemd to manage services, so without systemd, systemctl will not function
