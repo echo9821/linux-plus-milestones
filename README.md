@@ -1,6 +1,6 @@
 # Linux+ XK0-006 Milestones
 
-**Student:** [YOUR FULL NAME]
+**Student:** Margaret Dunsmore
 **Course:** CompTIA Linux+ XK0-006 — FastForward Track
 **Year:** 2025–2026
 
@@ -39,7 +39,7 @@ linux-plus-milestones/
 **Presented:** Class 10 — 10 minutes (7 min walkthrough + 3 min Q&A)
 
 ### What my script does
-[Describe your deployment script in 3-5 sentences — fill this in]
+My script creates a webserver system account and configures the web server directory to only be writable by the webserver system account. It then installs and turns on Apache2, and sets Apache to run automatically on system startup. Then it updates the firewall so that the only open incoming ports are HTTP and HTTPS (80 and 443). Finally it sets up a weekly cron job that runs logrotate.
 
 ### Container environment
 - Base image: ubuntu:22.04
@@ -50,7 +50,7 @@ linux-plus-milestones/
 [List 2-3 specific decisions you made and why — fill this in before submitting]
 
 ### AI Collaboration summary
-[Brief summary of how you used AI — fill this in]
+I used Google Gemini to explain how to set up a weekly cron job for logrotate. I was able to verify this using the container and the test_deploy.sh, and also with CompTIA's explaination of cron jobs. I also used Google Gemini to check my initial scripts for errors - it found one place where I forgot to use sudo and it also made recommendations about how to change things so they work in a docker environment, but I ignored the docker suggestions because this is not meant to be run in a docker environment, even though we used docker for the assignment.
 
 ---
 
