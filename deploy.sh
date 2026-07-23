@@ -111,18 +111,18 @@ log "Section 1 complete"
 #         - What is the numeric permission value you chose and why?
 
 # YOUR CODE HERE:
-#Create /var/www/html only if it does not already exist
 
+#Create /var/www/html only if it does not already exist
 mkdir -p /var/www/html
 echo "Created /var/www/html directory"
 
-#Set ownership of /var/www/html to webservice and set appropriate file/directory permissions
-
+#Set ownership of /var/www/html to webservice and set file/directory permissions to 755 - the owner can r/w/x, while group and other can only r/x
 sudo chown -R webservice:webservice /var/www/html
 sudo chmod 755 /var/www/html
 echo "Set /var/www/html ownership: "
 ls -ld /var/www/html
 
+touch /var/www/html/index.html
 
 log "Section 2 complete"
 
@@ -145,11 +145,18 @@ log "Section 2 complete"
 #         - What does verifying the exit code protect against?
 
 # YOUR CODE HERE:
-#install apache2
-sudo apt update 
-sudo apt install -y apache2 
+#Get any updates from the Ubuntu server and install Apache
+#The && ensures that the install command only runs if the update command succeeds. 
+#The -y flag accepts any prompts that the install command would normally ask automatically, which means the user doesn't have to do anything
+sudo apt-get update && sudo apt-get install -y apache2 
 
-echo "Installed Apache"
+#This section checks to see if Apache installed (the exit code would be 0) or if it failed to install, prints the exit code
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "Installation succeeded (Exit code: $EXIT_CODE)"
+else
+    echo "Installation failed with exit code: $EXIT_CODE"
 
 log "Section 3 complete"
 
@@ -182,7 +189,11 @@ log "Section 3 complete"
 
 sudo systemctl enable apache2 
 sudo systemctl start apache2
-#systemctl does not run inside standard docker containers, so you will get a FAIL message here
+#systemctl does not run inside standard docker containers, because docker does not run an init system like systemd. Docker runs applications directly in the foreground.
+#systemctl requires systemd to manage services, so without systemd, systemctl will not function
+#The error you get is: 
+#System has not been booted with systemd as init system (PID 1). Can't operate.
+#Failed to connect to bus: Host is down
 
 
 log "Section 4 complete"
@@ -208,22 +219,19 @@ log "Section 4 complete"
 
 # YOUR CODE HERE:
 
-#allow only needed web ports - HTTP/HTTPS
-#document docker-specific behavior
-
-#set default firewall rules
+#Set default firewall rules - deny all incoming and allow outgoing
 sudo ufw default deny incoming 
 sudo ufw default allow outgoing 
 
-#allow only HTTP(port 80) and HTTPS(port 443)
+#Allow only HTTP(port 80) and HTTPS(port 443)
 sudo ufw allow 80/tcp 
 sudo ufw allow 443/tcp 
 
-sudo ufw -force enable 
+#Start the firewall
+sudo ufw --force enable 
 
-#this will fail because docker bypasses UFW by default
-
-echo -e "Firewall Status: \n$(sudo ufw status | grep -E "(Status:|80|443|Nginx|Apache)")"
+#this will fail because docker bypasses UFW by default. Docker inserts its rules into the iptables BEFORE ufw, so anything defined in ufw will not apply to things run in Docker.
+#you will get messages saying you cannot run iptables because you are not root. 
 
 log "Section 5 complete"
 
